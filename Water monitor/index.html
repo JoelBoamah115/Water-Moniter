@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Quality Monitoring Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-tint"></i>
+                    <h1>Water Quality Monitor</h1>
+                </div>
+                <div class="header-controls">
+                    <div class="status-indicator">
+                        <span class="status-dot" id="connectionStatus"></span>
+                        <span id="connectionText">Connecting...</span>
+                    </div>
+                    <button class="settings-btn" onclick="openSettings()">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Alert Banner -->
+        <div class="alert-banner" id="alertBanner" style="display: none;">
+            <div class="alert-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="alertMessage"></span>
+                <button class="alert-close" onclick="closeAlert()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Sensor Cards -->
+            <section class="sensor-grid">
+                <div class="sensor-card" data-sensor="ph">
+                    <div class="sensor-header">
+                        <div class="sensor-icon ph">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <div class="sensor-info">
+                            <h3>pH Level</h3>
+                            <span class="sensor-unit">pH</span>
+                        </div>
+                    </div>
+                    <div class="sensor-value">
+                        <span class="value" id="phValue">--</span>
+                        <div class="status-badge" id="phStatus">
+                            <i class="fas fa-circle"></i>
+                            <span>Waiting</span>
+                        </div>
+                    </div>
+                    <div class="sensor-range">
+                        Range: <span id="phRange">6.5 - 8.5</span>
+                    </div>
+                </div>
+
+                <div class="sensor-card" data-sensor="turbidity">
+                    <div class="sensor-header">
+                        <div class="sensor-icon turbidity">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="sensor-info">
+                            <h3>Turbidity</h3>
+                            <span class="sensor-unit">NTU</span>
+                        </div>
+                    </div>
+                    <div class="sensor-value">
+                        <span class="value" id="turbidityValue">--</span>
+                        <div class="status-badge" id="turbidityStatus">
+                            <i class="fas fa-circle"></i>
+                            <span>Waiting</span>
+                        </div>
+                    </div>
+                    <div class="sensor-range">
+                        Range: <span id="turbidityRange">0 - 5</span>
+                    </div>
+                </div>
+
+                <div class="sensor-card" data-sensor="temperature">
+                    <div class="sensor-header">
+                        <div class="sensor-icon temperature">
+                            <i class="fas fa-thermometer-half"></i>
+                        </div>
+                        <div class="sensor-info">
+                            <h3>Temperature</h3>
+                            <span class="sensor-unit">°C</span>
+                        </div>
+                    </div>
+                    <div class="sensor-value">
+                        <span class="value" id="temperatureValue">--</span>
+                        <div class="status-badge" id="temperatureStatus">
+                            <i class="fas fa-circle"></i>
+                            <span>Waiting</span>
+                        </div>
+                    </div>
+                    <div class="sensor-range">
+                        Range: <span id="temperatureRange">15 - 30</span>
+                    </div>
+                </div>
+
+                <div class="sensor-card" data-sensor="waterlevel">
+                    <div class="sensor-header">
+                        <div class="sensor-icon waterlevel">
+                            <i class="fas fa-water"></i>
+                        </div>
+                        <div class="sensor-info">
+                            <h3>Water Level</h3>
+                            <span class="sensor-unit">cm</span>
+                        </div>
+                    </div>
+                    <div class="sensor-value">
+                        <span class="value" id="waterlevelValue">--</span>
+                        <div class="status-badge" id="waterlevelStatus">
+                            <i class="fas fa-circle"></i>
+                            <span>Waiting</span>
+                        </div>
+                    </div>
+                    <div class="sensor-range">
+                        Range: <span id="waterlevelRange">50 - 200</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Real-time Sensor Data</h3>
+                        <div class="chart-controls">
+                            <select id="timeRange">
+                                <option value="10">Last 10 readings</option>
+                                <option value="20" selected>Last 20 readings</option>
+                                <option value="50">Last 50 readings</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="sensorChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Last Updated -->
+            <div class="last-updated">
+                Last updated: <span id="lastUpdated">Never</span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>System Settings</h2>
+                <button class="modal-close" onclick="closeSettings()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div class="settings-section">
+                    <h3>ThingSpeak Configuration</h3>
+                    <div class="form-group">
+                        <label for="channelId">Channel ID:</label>
+                        <input type="text" id="channelId" placeholder="Enter your ThingSpeak Channel ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="readApiKey">Read API Key:</label>
+                        <input type="text" id="readApiKey" placeholder="Enter your Read API Key">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Safe Range Settings</h3>
+                    
+                    <div class="range-setting">
+                        <h4>pH Level</h4>
+                        <div class="range-inputs">
+                            <input type="number" id="phMin" placeholder="Min" step="0.1">
+                            <span>to</span>
+                            <input type="number" id="phMax" placeholder="Max" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="range-setting">
+                        <h4>Turbidity (NTU)</h4>
+                        <div class="range-inputs">
+                            <input type="number" id="turbidityMin" placeholder="Min" step="0.1">
+                            <span>to</span>
+                            <input type="number" id="turbidityMax" placeholder="Max" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="range-setting">
+                        <h4>Temperature (°C)</h4>
+                        <div class="range-inputs">
+                            <input type="number" id="temperatureMin" placeholder="Min" step="0.1">
+                            <span>to</span>
+                            <input type="number" id="temperatureMax" placeholder="Max" step="0.1">
+                        </div>
+                    </div>
+
+                    <div class="range-setting">
+                        <h4>Water Level (cm)</h4>
+                        <div class="range-inputs">
+                            <input type="number" id="waterlevelMin" placeholder="Min" step="1">
+                            <span>to</span>
+                            <input type="number" id="waterlevelMax" placeholder="Max" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Update Frequency</h3>
+                    <div class="form-group">
+                        <label for="updateInterval">Update every:</label>
+                        <select id="updateInterval">
+                            <option value="5000">5 seconds</option>
+                            <option value="10000" selected>10 seconds</option>
+                            <option value="30000">30 seconds</option>
+                            <option value="60000">1 minute</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
+                <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
